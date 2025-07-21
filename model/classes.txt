@@ -1,0 +1,3 @@
+Bengin
+Malignant
+Normal
