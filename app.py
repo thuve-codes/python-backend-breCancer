@@ -377,4 +377,5 @@ if __name__ == '__main__':
             for i in range(10):
                 f.write(f"class_{i}\n")
 
-    app.run(debug=True, port=1234)
+    #app.run(debug=True, port=1234)
+    app.run(host='0.0.0.0', port=1234)
