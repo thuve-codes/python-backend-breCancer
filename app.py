@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
-from flask import Flask, request, jsonify, render_template, url_for
+from flask import Flask, request, jsonify
 from PIL import Image
 from torchvision import models, transforms
 import shap
@@ -101,7 +101,7 @@ class BaseModelRunner:
 
 # ==================== Grad-CAM ====================
 
-class GradCAMRunner(BaseModelRunner):
+class GradCAMRunner:
     def __init__(self, model_path, classes_path, target_layer='layer4', device=None):
         super().__init__(model_path, classes_path, device)
         self.activations = None
@@ -226,14 +226,11 @@ class SHAPRunner(BaseModelRunner):
         return output_file_name, cls_name, float(probs[cls_idx])
 
 
-# ===================== Trainable Attention =========
-
-
 # ==================== API Routes ====================
 
 @app.route('/')
 def index():
-    return "XAI API is running."
+    return jsonify({"message": "XAI API is running."})
 
 
 @app.route('/cam', methods=['POST'])
@@ -251,7 +248,7 @@ def run_cam():
         runner = GradCAMRunner(MODEL_PATH, CLASSES_PATH)
         output_file_name, predicted_class, probability = runner.run(image_path, STATIC_IMG_DIR)
         return jsonify({
-            "image_url": url_for('static', filename=output_file_name),
+            "image_url": f"/static/{output_file_name}",
             "predicted_class": predicted_class,
             "probability": probability
         })
@@ -276,7 +273,7 @@ def run_ig():
         runner = IntegratedGradientsRunner(MODEL_PATH, CLASSES_PATH)
         output_file_name, predicted_class, probability = runner.run(image_path, STATIC_IMG_DIR)
         return jsonify({
-            "image_url": url_for('static', filename=output_file_name),
+            "image_url": f"/static/{output_file_name}",
             "predicted_class": predicted_class,
             "probability": probability
         })
@@ -301,7 +298,7 @@ def run_shap():
         runner = SHAPRunner(MODEL_PATH, CLASSES_PATH)
         output_file_name, predicted_class, probability = runner.run(image_path, STATIC_IMG_DIR)
         return jsonify({
-            "image_url": url_for('static', filename=output_file_name),
+            "image_url": f"/static/{output_file_name}",
             "predicted_class": predicted_class,
             "probability": probability
         })
@@ -309,56 +306,6 @@ def run_shap():
         return jsonify({"error": str(e)}), 500
     finally:
         shutil.rmtree(temp_dir)
-
-
-@app.route('/attn', methods=['POST'])
-def run_attention():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image file provided"}), 400
-    uploaded_file = request.files['image']
-    if uploaded_file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
-    temp_dir, input_dir, _ = get_session_temp_dirs()
-    image_path = save_uploaded_file(uploaded_file, input_dir)
-
-    try:
-        runner = BatchAttention(MODEL_PATH, CLASSES_PATH)
-        output_file_name, predicted_class, probability = runner.run_on_image(image_path, STATIC_IMG_DIR)
-        return jsonify({
-            "image_url": url_for('static', filename=output_file_name),
-            "predicted_class": predicted_class,
-            "probability": probability
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-    finally:
-        shutil.rmtree(temp_dir)
-
-
-# ==================== UI Routes ====================
-
-@app.route('/ui/gradcam')
-def gradcam_ui():
-    return render_template('gradcam.html')
-
-@app.route('/ui/cam')
-def cam_ui():
-    return render_template('cam.html')
-
-@app.route('/ui/ig')
-def ig_ui():
-    return render_template('integrated_gradients.html')
-
-
-@app.route('/ui/shap')
-def shap_ui():
-    return render_template('shap.html')
-
-@app.route('/ui/attention')
-def attention_ui():
-    return render_template('attention.html')
-
 
 
 # ==================== Run App ====================
@@ -377,5 +324,4 @@ if __name__ == '__main__':
             for i in range(10):
                 f.write(f"class_{i}\n")
 
-    #app.run(debug=True, port=1234)
-    app.run(host='0.0.0.0', port=1234)
+    app.run(host='0.0.0.0', port=5000)
