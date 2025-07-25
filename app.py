@@ -101,7 +101,7 @@ class BaseModelRunner:
 
 # ==================== Grad-CAM ====================
 
-class GradCAMRunner:
+class GradCAMRunner(BaseModelRunner):  # <-- Fixed inheritance here
     def __init__(self, model_path, classes_path, target_layer='layer4', device=None):
         super().__init__(model_path, classes_path, device)
         self.activations = None
