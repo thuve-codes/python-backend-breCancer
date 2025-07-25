@@ -5,7 +5,7 @@ from pathlib import Path
 
 import cv2
 import matplotlib
-matplotlib.use('Agg')  # Must come before pyplot import
+matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -101,7 +101,7 @@ class BaseModelRunner:
 
 # ==================== Grad-CAM ====================
 
-class GradCAMRunner:
+class GradCAMRunner(BaseModelRunner):  # ✅ FIXED
     def __init__(self, model_path, classes_path, target_layer='layer4', device=None):
         super().__init__(model_path, classes_path, device)
         self.activations = None
